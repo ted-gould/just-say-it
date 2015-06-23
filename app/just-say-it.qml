@@ -28,14 +28,10 @@ MainView {
     height: units.gu(76)
 
     Page {
-        title: i18n.tr("App with backend")
+        title: i18n.tr("Just say it!")
 
-        MyType {
-            id: myType
-
-            Component.onCompleted: {
-                myType.helloWorld = i18n.tr("Hello world..")
-            }
+        AudioRecorder {
+            id: recorder
         }
 
         Column {
@@ -45,23 +41,27 @@ MainView {
                 fill: parent
             }
 
-            Label {
-                id: label
-                objectName: "label"
-
-                text: myType.helloWorld
-            }
-
             Button {
                 objectName: "button"
                 width: parent.width
 
-                text: i18n.tr("Tap me!")
+                text: recorder.state == "stopped" ? i18n.tr("Record") : i18n.tr("Stop")
 
                 onClicked: {
-                    myType.helloWorld = i18n.tr("..from Cpp Backend")
+                    if (recorder.state == "stopped")
+                        recorder.record()
+                    else
+                        recorder.stop()
                 }
             }
+
+            Label {
+                id: label
+                objectName: "label"
+
+                text: recorder.text
+            }
+
         }
     }
 }
