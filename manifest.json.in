@@ -1,17 +1,15 @@
 {
     "name": "@APP_ID@",
-    "description": "description of just-say-it",
+    "description": "Voice recognition using the HP IDOL OnDemand webservice",
     "architecture": "@CLICK_ARCH@",
     "title": "@APP_NAME@",
     "hooks": {
         "JustSayIt": {
             "apparmor": "JustSayIt.apparmor",
-            "desktop":  "JustSayIt.desktop"
+            "desktop": "JustSayIt.desktop"
         }
     },
     "version": "0.1",
     "maintainer": "Ted Gould <ted@gould.cx>",
-    "framework" : "ubuntu-sdk-15.04"
+    "framework": "ubuntu-sdk-15.04"
 }
-
-

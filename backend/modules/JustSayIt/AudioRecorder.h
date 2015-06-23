@@ -3,14 +3,14 @@
 
 #include <QObject>
 
-class MyType : public QObject
+class AudioRecorder : public QObject
 {
     Q_OBJECT
     Q_PROPERTY( QString helloWorld READ helloWorld WRITE setHelloWorld NOTIFY helloWorldChanged )
 
 public:
-    explicit MyType(QObject *parent = 0);
-    ~MyType();
+    explicit AudioRecorder (QObject *parent = 0);
+    ~AudioRecorder ();
 
 Q_SIGNALS:
     void helloWorldChanged();

@@ -5,7 +5,7 @@ include_directories(
 set(
     JustSayItbackend_SRCS
     modules/JustSayIt/backend.cpp
-    modules/JustSayIt/mytype.cpp
+    modules/JustSayIt/AudioRecorder.cpp
 )
 
 add_library(JustSayItbackend MODULE
