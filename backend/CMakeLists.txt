@@ -15,7 +15,7 @@ add_library(JustSayItbackend MODULE
 set_target_properties(JustSayItbackend PROPERTIES
          LIBRARY_OUTPUT_DIRECTORY JustSayIt)
 
-qt5_use_modules(JustSayItbackend Gui Qml Quick)
+qt5_use_modules(JustSayItbackend Gui Qml Quick Multimedia)
 
 # Copy qmldir file to build dir for running in QtCreator
 add_custom_target(JustSayItbackend-qmldir ALL
