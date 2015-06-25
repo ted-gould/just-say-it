@@ -56,6 +56,13 @@ MainView {
             }
 
             Label {
+                id: recorderState
+                objectName: "recorderState"
+
+                text: recorder.state
+            }
+
+            Label {
                 id: label
                 objectName: "label"
 

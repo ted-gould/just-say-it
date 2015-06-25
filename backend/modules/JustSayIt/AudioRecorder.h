@@ -25,14 +25,17 @@ Q_SIGNALS:
 
 protected slots:
     void onStateChanged (QMediaRecorder::State);
-    void onFinished ();
+    void onUploadFinished ();
+    void onContentFinished ();
 
 protected:
     QString getText() { return m_text; }
     QString getState() {
         if (m_recorder.state() == QMediaRecorder::StoppedState) {
-            if (m_reply != NULL && m_reply->isRunning())
-                return "decoding";
+            if (m_upload != NULL && m_upload->isRunning())
+                return "uploading";
+            else if (m_content != NULL && m_content->isRunning())
+                return "processing";
             else
                 return "stopped";
         } else {
@@ -43,7 +46,11 @@ protected:
     QString m_text;
     QAudioRecorder m_recorder;
     QNetworkAccessManager * m_qnam;
-    QNetworkReply * m_reply;
+    QNetworkReply * m_upload;
+    QNetworkReply * m_content;
+
+private:
+    void clearNetwork ();
 };
 
 #endif // MYTYPE_H

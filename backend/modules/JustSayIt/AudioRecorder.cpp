@@ -4,12 +4,14 @@
 #include <QHttpPart>
 #include <QNetworkRequest>
 #include <QFile>
+#include <QJsonDocument>
 
 AudioRecorder::AudioRecorder(QObject *parent)
     : QObject(parent)
     , m_text("")
     , m_recorder(this)
-    , m_reply(NULL)
+    , m_upload(NULL)
+    , m_content(NULL)
 {
     m_qnam = new QNetworkAccessManager(this);
 
@@ -29,10 +31,20 @@ AudioRecorder::AudioRecorder(QObject *parent)
 }
 
 AudioRecorder::~AudioRecorder() {
-    if (m_reply != NULL) {
-        m_reply->abort();
-        m_reply->deleteLater();
-        m_reply = NULL;
+    clearNetwork();
+}
+
+void
+AudioRecorder::clearNetwork () {
+    if (m_upload != NULL) {
+        m_upload->abort();
+        m_upload->deleteLater();
+        m_upload = NULL;
+    }
+    if (m_content != NULL) {
+        m_content->abort();
+        m_content->deleteLater();
+        m_content = NULL;
     }
 }
 
@@ -51,11 +63,7 @@ AudioRecorder::stop() {
     m_recorder.stop();
     qDebug() << "Recording at:" << m_recorder.actualLocation();
 
-    if (m_reply != NULL) {
-        m_reply->abort();
-        m_reply->deleteLater();
-        m_reply = NULL;
-    }
+    clearNetwork();
 
     /* Goal: */
     /* curl -X POST --form "file=@/tmp/tmp.wav" --form "apikey=7a3505c1-dc73-423c-a095-9ab189563bd9" https://api.idolondemand.com/1/api/async/recognizespeech/v1 */
@@ -83,24 +91,68 @@ AudioRecorder::stop() {
     QUrl url("https://api.idolondemand.com/1/api/async/recognizespeech/v1");
     QNetworkRequest request(url);
 
-    m_reply = m_qnam->post(request, multipart);
-    multipart->setParent(m_reply);
+    m_upload = m_qnam->post(request, multipart);
+    multipart->setParent(m_upload);
 
-    connect(m_reply, SIGNAL(finished()), this, SLOT(onFinished()));
+    connect(m_upload, SIGNAL(finished()), this, SLOT(onUploadFinished()));
+
+    Q_EMIT stateChanged();
 }
 
 void
-AudioRecorder::onFinished () {
-    Q_EMIT stateChanged();
+AudioRecorder::onUploadFinished () {
+    if (m_upload->error() == QNetworkReply::NoError) {
+        QJsonParseError error;
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(m_upload->readAll(), &error);
+        if (error.error != QJsonParseError::NoError) {
+            qWarning() << "Error parsing feed entries" << error.errorString();
+        } else {
+            QVariant map = jsonDoc.toVariant();
+            QString jobid = map.toMap()["jobID"].toString();
+            qDebug() << "JobID:" << jobid;
 
-    if (m_reply->error() == QNetworkReply::NoError) {
-//       QVariant map(m_reply->readAll());
-//       m_text = map.toMap()["document"].toList()[0].toMap()["content"].toString();
-        m_text = m_reply->readAll();
+            QUrl url("https://api.idolondemand.com/1/job/result/" + jobid + "?apikey=7a3505c1-dc73-423c-a095-9ab189563bd9");
+            QNetworkRequest request(url);
+
+            m_content = m_qnam->get(request);
+            connect(m_content, SIGNAL(finished()), this, SLOT(onContentFinished()));
+       }
     } else {
         m_text = "Error from webservice:\n";
-        m_text += m_reply->readAll();
+        m_text += m_upload->readAll();
+
+        Q_EMIT textChanged();
+    }
+
+    m_upload->deleteLater();
+    m_upload = NULL;
+
+    Q_EMIT stateChanged();
+}
+
+void
+AudioRecorder::onContentFinished () {
+    if (m_content->error() == QNetworkReply::NoError) {
+        QJsonParseError error;
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(m_content->readAll(), &error);
+        if (error.error != QJsonParseError::NoError) {
+            qWarning() << "Error parsing feed entries" << error.errorString();
+        } else {
+            QVariant map = jsonDoc.toVariant();
+            QString content = map.toMap()["actions"].toList()[0].toMap()["result"].toMap()["document"].toList()[0].toMap()["content"].toString();
+
+            m_text = "Recognized Text: ";
+            m_text += content;
+       }
+    } else {
+        m_text = "Error from webservice:\n";
+        m_text += m_content->readAll();
     }
 
     Q_EMIT textChanged();
+
+    m_content->deleteLater();
+    m_content = NULL;
+
+    Q_EMIT stateChanged();
 }
