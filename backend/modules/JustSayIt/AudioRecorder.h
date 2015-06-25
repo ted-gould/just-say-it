@@ -3,6 +3,8 @@
 
 #include <QObject>
 #include <QAudioRecorder>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
 class AudioRecorder : public QObject
 {
@@ -23,12 +25,16 @@ Q_SIGNALS:
 
 protected slots:
     void onStateChanged (QMediaRecorder::State);
+    void onFinished ();
 
 protected:
     QString getText() { return m_text; }
     QString getState() {
         if (m_recorder.state() == QMediaRecorder::StoppedState) {
-            return "stopped";
+            if (m_reply != NULL && m_reply->isRunning())
+                return "decoding";
+            else
+                return "stopped";
         } else {
             return "recording";
         }
@@ -36,6 +42,8 @@ protected:
 
     QString m_text;
     QAudioRecorder m_recorder;
+    QNetworkAccessManager * m_qnam;
+    QNetworkReply * m_reply;
 };
 
 #endif // MYTYPE_H
