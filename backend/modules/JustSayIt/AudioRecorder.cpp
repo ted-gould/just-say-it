@@ -16,15 +16,10 @@ AudioRecorder::AudioRecorder(QObject *parent)
 {
     m_qnam = new QNetworkAccessManager(this);
 
-    foreach (const QString &codecName, m_recorder.supportedAudioCodecs())
-        qDebug() << "Supported CODEC:" << codecName;
-    foreach (const QString &containerName, m_recorder.supportedContainers())
-        qDebug() << "Supported Container:" << containerName;
-
     QAudioEncoderSettings settings;
     settings.setEncodingMode(QMultimedia::ConstantQualityEncoding);
-    settings.setChannelCount(2);
-    settings.setSampleRate(44100);
+    settings.setChannelCount(1);
+    settings.setSampleRate(16000);
     settings.setCodec("audio/PCM");
 
     m_recorder.setEncodingSettings(settings);
