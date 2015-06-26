@@ -91,15 +91,25 @@ AudioRecorder::onStateChanged (QMediaRecorder::State state) {
 
 void
 AudioRecorder::record() {
+    if (m_text != "") {
+        m_text = "";
+        Q_EMIT textChanged();
+    }
+
     m_recorder.setMuted(false);
     m_recorder.record();
 }
 
 void
 AudioRecorder::stop() {
-    m_recorder.setMuted(true);
-    /* We're putting a second of silence at the end, it seems to really help the detection */
-    m_timer.start(1000, Qt::CoarseTimer, this);
+    if (m_recorder.state() == QMediaRecorder::RecordingState) {
+        m_recorder.setMuted(true);
+        /* We're putting a second of silence at the end, it seems to really help the detection */
+        m_timer.start(1000, Qt::CoarseTimer, this);
+    } else if (m_upload != NULL || m_content != NULL) {
+        clearNetwork();
+        Q_EMIT stateChanged();
+    }
 }
 
 void
@@ -129,12 +139,16 @@ AudioRecorder::onUploadFinished () {
             m_content = m_qnam->get(request);
             connect(m_content, SIGNAL(finished()), this, SLOT(onContentFinished()));
        }
+    } else if (m_upload->error() == QNetworkReply::OperationCanceledError) {
+        /* No Op */
     } else {
         m_text = "Error from webservice:\n";
         m_text += m_upload->readAll();
 
         Q_EMIT textChanged();
     }
+
+    /* TODO: Delete file */
 
     m_upload->deleteLater();
     m_upload = NULL;
@@ -155,6 +169,8 @@ AudioRecorder::onContentFinished () {
 
             m_text = content;
        }
+    } else if (m_content->error() == QNetworkReply::OperationCanceledError) {
+        /* No Op */
     } else {
         m_text = "Error from webservice:\n";
         m_text += m_content->readAll();

@@ -89,13 +89,15 @@ MainView {
                 }
             }
 
-            TextField {
+            TextArea {
                 id: label
                 objectName: "label"
+                width: parent.width
 
                 readOnly: true
                 placeholderText: i18n.tr("No Detected Text")
                 text: recorder.text
+                autoSize: true
             }
 
             Button {
