@@ -5,6 +5,7 @@
 #include <QAudioRecorder>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QBasicTimer>
 
 class AudioRecorder : public QObject
 {
@@ -43,11 +44,14 @@ protected:
         }
     }
 
+    void timerEvent (QTimerEvent *) Q_DECL_OVERRIDE;
+
     QString m_text;
     QAudioRecorder m_recorder;
     QNetworkAccessManager * m_qnam;
     QNetworkReply * m_upload;
     QNetworkReply * m_content;
+    QBasicTimer m_timer;
 
 private:
     void clearNetwork ();

@@ -5,6 +5,7 @@
 #include <QNetworkRequest>
 #include <QFile>
 #include <QJsonDocument>
+#include <QTimerEvent>
 
 AudioRecorder::AudioRecorder(QObject *parent)
     : QObject(parent)
@@ -95,12 +96,24 @@ AudioRecorder::onStateChanged (QMediaRecorder::State state) {
 
 void
 AudioRecorder::record() {
+    m_recorder.setMuted(false);
     m_recorder.record();
 }
 
 void
 AudioRecorder::stop() {
-    m_recorder.stop();
+    m_recorder.setMuted(true);
+    /* We're putting a second of silence at the end, it seems to really help the detection */
+    m_timer.start(1000, Qt::CoarseTimer, this);
+}
+
+void
+AudioRecorder::timerEvent(QTimerEvent * event)
+{
+    if (event->timerId() == m_timer.timerId()) {
+        m_recorder.stop();
+        m_timer.stop(); /* Make it a one shot */
+    }
 }
 
 void
