@@ -15,10 +15,15 @@ AudioRecorder::AudioRecorder(QObject *parent)
 {
     m_qnam = new QNetworkAccessManager(this);
 
+    foreach (const QString &codecName, m_recorder.supportedAudioCodecs())
+        qDebug() << "Supported CODEC:" << codecName;
+    foreach (const QString &containerName, m_recorder.supportedContainers())
+        qDebug() << "Supported Container:" << containerName;
+
     QAudioEncoderSettings settings;
-    settings.setSampleRate(8096);
     settings.setEncodingMode(QMultimedia::ConstantQualityEncoding);
-    settings.setChannelCount(1);
+    settings.setChannelCount(2);
+    settings.setSampleRate(44100);
     settings.setCodec("audio/PCM");
 
     m_recorder.setEncodingSettings(settings);
@@ -49,7 +54,42 @@ AudioRecorder::clearNetwork () {
 }
 
 void
-AudioRecorder::onStateChanged (QMediaRecorder::State) {
+AudioRecorder::onStateChanged (QMediaRecorder::State state) {
+    if (state == QMediaRecorder::StoppedState) {
+        clearNetwork();
+
+        /* Goal: */
+        /* curl -X POST --form "file=@/tmp/tmp.wav" --form "apikey=7a3505c1-dc73-423c-a095-9ab189563bd9" https://api.idolondemand.com/1/api/async/recognizespeech/v1 */
+
+        QHttpMultiPart * multipart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+
+        /* Set Key */
+        QHttpPart apikey;
+        apikey.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"apikey\""));
+        apikey.setBody("7a3505c1-dc73-423c-a095-9ab189563bd9");
+        multipart->append(apikey);
+
+        /* Attach file */
+        QHttpPart audiofile;
+        audiofile.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"file\"; filename=\"tmp.wav\""));
+        audiofile.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("audio/wav"));
+        QFile * file = new QFile("/tmp/tmp.wav");
+        file->open(QIODevice::ReadOnly);
+        audiofile.setBodyDevice(file);
+        file->setParent(multipart);
+
+        multipart->append(audiofile);
+
+        /* Do request */
+        QUrl url("https://api.idolondemand.com/1/api/async/recognizespeech/v1");
+        QNetworkRequest request(url);
+
+        m_upload = m_qnam->post(request, multipart);
+        multipart->setParent(m_upload);
+
+        connect(m_upload, SIGNAL(finished()), this, SLOT(onUploadFinished()));
+    }
+
     Q_EMIT stateChanged();
 }
 
@@ -61,42 +101,6 @@ AudioRecorder::record() {
 void
 AudioRecorder::stop() {
     m_recorder.stop();
-    qDebug() << "Recording at:" << m_recorder.actualLocation();
-
-    clearNetwork();
-
-    /* Goal: */
-    /* curl -X POST --form "file=@/tmp/tmp.wav" --form "apikey=7a3505c1-dc73-423c-a095-9ab189563bd9" https://api.idolondemand.com/1/api/async/recognizespeech/v1 */
-
-    QHttpMultiPart * multipart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
-
-    /* Set Key */
-    QHttpPart apikey;
-    apikey.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"apikey\""));
-    apikey.setBody("7a3505c1-dc73-423c-a095-9ab189563bd9");
-    multipart->append(apikey);
-
-    /* Attach file */
-    QHttpPart audiofile;
-    audiofile.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"file\"; filename=\"tmp.wav\""));
-    audiofile.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("audio/wav"));
-    QFile * file = new QFile("/tmp/tmp.wav");
-    file->open(QIODevice::ReadOnly);
-    audiofile.setBodyDevice(file);
-    file->setParent(multipart);
-
-    multipart->append(audiofile);
-
-    /* Do request */
-    QUrl url("https://api.idolondemand.com/1/api/async/recognizespeech/v1");
-    QNetworkRequest request(url);
-
-    m_upload = m_qnam->post(request, multipart);
-    multipart->setParent(m_upload);
-
-    connect(m_upload, SIGNAL(finished()), this, SLOT(onUploadFinished()));
-
-    Q_EMIT stateChanged();
 }
 
 void
