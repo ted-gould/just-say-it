@@ -34,6 +34,41 @@ MainView {
             id: recorder
         }
 
+        states: [
+            State {
+                name: "recording"
+                when: recorder.state == "recording"
+                PropertyChanges {
+                    target: button
+                    text: i18n.tr("Stop Recording")
+                }
+            },
+            State {
+                name: "stopped"
+                when: recorder.state == "stopped"
+                PropertyChanges {
+                    target: button
+                    text: i18n.tr("Start Recording")
+                }
+            },
+            State {
+                name: "upload"
+                when: recorder.state == "uploading"
+                PropertyChanges {
+                    target: button
+                    text: i18n.tr("Stop Upload")
+                }
+            },
+            State {
+                name: "processing"
+                when: recorder.state == "processing"
+                PropertyChanges {
+                    target: button
+                    text: i18n.tr("Cancel Processing")
+                }
+            }
+        ]
+
         Column {
             spacing: units.gu(1)
             anchors {
@@ -42,10 +77,9 @@ MainView {
             }
 
             Button {
+                id: button
                 objectName: "button"
                 width: parent.width
-
-                text: recorder.state == "stopped" ? i18n.tr("Record") : i18n.tr("Stop")
 
                 onClicked: {
                     if (recorder.state == "stopped")
@@ -55,18 +89,28 @@ MainView {
                 }
             }
 
-            Label {
-                id: recorderState
-                objectName: "recorderState"
-
-                text: recorder.state
-            }
-
-            Label {
+            TextField {
                 id: label
                 objectName: "label"
 
+                readOnly: true
+                placeholderText: i18n.tr("No Detected Text")
                 text: recorder.text
+            }
+
+            Button {
+                id: useButton
+                objectName: "useButton"
+                width: parent.width
+                text: i18n.tr("Use Text")
+            }
+
+            Button {
+                id: closeButton
+                objectName: "useButton"
+                width: parent.width
+                text: i18n.tr("Close")
+                onClicked: Qt.quit()
             }
 
         }

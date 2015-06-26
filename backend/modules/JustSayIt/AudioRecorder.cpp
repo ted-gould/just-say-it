@@ -153,8 +153,7 @@ AudioRecorder::onContentFinished () {
             QVariant map = jsonDoc.toVariant();
             QString content = map.toMap()["actions"].toList()[0].toMap()["result"].toMap()["document"].toList()[0].toMap()["content"].toString();
 
-            m_text = "Recognized Text: ";
-            m_text += content;
+            m_text = content;
        }
     } else {
         m_text = "Error from webservice:\n";
