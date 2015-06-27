@@ -1,6 +1,6 @@
 [Desktop Entry]
-_Name=just-say-it
-Comment=My project description
+_Name=Just Say It!
+_Comment=Speak to your phone and get text!
 Exec=@EXEC@
 Icon=@ICON@
 Terminal=false
