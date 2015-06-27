@@ -51,6 +51,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/manifest.json
 
 install(DIRECTORY "app/graphics" DESTINATION ${DATA_DIR})
 install(FILES "JustSayIt.apparmor" DESTINATION ${DATA_DIR})
+install(FILES "just-say-it-content.json" DESTINATION ${DATA_DIR})
 
 add_subdirectory(app)
 add_subdirectory(backend)

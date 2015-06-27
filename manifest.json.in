@@ -6,7 +6,8 @@
     "hooks": {
         "JustSayIt": {
             "apparmor": "JustSayIt.apparmor",
-            "desktop": "JustSayIt.desktop"
+            "desktop": "JustSayIt.desktop",
+            "content-hub": "just-say-it-content.json"
         }
     },
     "version": "0.1",
