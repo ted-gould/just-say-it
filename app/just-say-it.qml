@@ -149,7 +149,7 @@ MainView {
 
                 visible: parent.visible
                 contentType: ContentType.Text
-                handler: ContentHandler.Share
+                handler: ContentHandler.Source
 
                 onCancelPressed: {
                     print ("onCancelPressed");
