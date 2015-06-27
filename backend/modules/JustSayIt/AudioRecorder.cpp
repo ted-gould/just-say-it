@@ -24,7 +24,6 @@ AudioRecorder::AudioRecorder(QObject *parent)
 
     m_recorder.setEncodingSettings(settings);
     m_recorder.setContainerFormat("wav");
-    m_recorder.setOutputLocation(QUrl::fromLocalFile("/tmp/tmp.wav"));
     m_recorder.setAudioInput(m_recorder.defaultAudioInput());
 
     connect(&m_recorder, SIGNAL(stateChanged(QMediaRecorder::State)),
@@ -69,10 +68,8 @@ AudioRecorder::onStateChanged (QMediaRecorder::State state) {
         QHttpPart audiofile;
         audiofile.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"file\"; filename=\"tmp.wav\""));
         audiofile.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("audio/wav"));
-        QFile * file = new QFile("/tmp/tmp.wav");
-        file->open(QIODevice::ReadOnly);
-        audiofile.setBodyDevice(file);
-        file->setParent(multipart);
+        m_tempfile->open();
+        audiofile.setBodyDevice(&(*m_tempfile));
 
         multipart->append(audiofile);
 
@@ -96,6 +93,11 @@ AudioRecorder::record() {
         Q_EMIT textChanged();
     }
 
+    m_tempfile = std::make_shared<QTemporaryFile>();
+    m_tempfile->open(); /* Creates the file, but we can't use it with Audio Recorder */
+    m_tempfile->close();
+
+    m_recorder.setOutputLocation(QUrl::fromLocalFile(m_tempfile->fileName()));
     m_recorder.setMuted(false);
     m_recorder.record();
 }
@@ -107,8 +109,12 @@ AudioRecorder::stop() {
         /* We're putting a second of silence at the end, it seems to really help the detection */
         m_timer.start(1000, Qt::CoarseTimer, this);
     } else if (m_upload != NULL || m_content != NULL) {
-        clearNetwork();
-        Q_EMIT stateChanged();
+        if (m_upload) {
+            m_upload->abort();
+        }
+        if (m_content) {
+            m_content->abort();
+        }
     }
 }
 
@@ -148,10 +154,9 @@ AudioRecorder::onUploadFinished () {
         Q_EMIT textChanged();
     }
 
-    /* TODO: Delete file */
-
     m_upload->deleteLater();
     m_upload = NULL;
+    m_tempfile.reset();
 
     Q_EMIT stateChanged();
 }

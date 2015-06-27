@@ -1,11 +1,13 @@
 #ifndef MYTYPE_H
 #define MYTYPE_H
 
+#include <memory>
 #include <QObject>
 #include <QAudioRecorder>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QBasicTimer>
+#include <QTemporaryFile>
 
 class AudioRecorder : public QObject
 {
@@ -52,6 +54,7 @@ protected:
     QNetworkReply * m_upload;
     QNetworkReply * m_content;
     QBasicTimer m_timer;
+    std::shared_ptr<QTemporaryFile> m_tempfile;
 
 private:
     void clearNetwork ();
