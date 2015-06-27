@@ -25,7 +25,7 @@ set(QT_IMPORTS_DIR "lib/${ARCH_TRIPLET}")
 option(INSTALL_TESTS "Install the tests on make install" on)
 
 set(APP_NAME          just-say-it)
-set(APP_ID            "just-say-it.just-say-it")
+set(APP_ID            "just-say-it.ted")
 set(JUST-SAY-IT_DIR "share/qml/just-say-it")
 set(MAIN_QML          "just-say-it.qml")
 set(ICON              "graphics/just-say-it.png")
