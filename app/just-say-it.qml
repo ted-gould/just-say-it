@@ -111,7 +111,7 @@ MainView {
                     objectName: "useButton"
                     width: parent.width
                     text: i18n.tr("Share Text")
-                    onClicked: pageStack.push(picker, {"text": AudioRecorder.text})
+                    onClicked: pageStack.push(picker, {"text": recorder.text})
                 }
 
                 Button {
@@ -128,16 +128,7 @@ MainView {
         Page {
             id: picker
             visible: false
-            property var curTransfer
             property var text
-
-            function exportItems(text) {
-                print ("exportItems: " + text);
-                if (picker.curTransfer.state === ContentTransfer.InProgress) {
-                    picker.curTransfer.items = [ resultComponent.createObject(root, {"text": text}) ];
-                    picker.curTransfer.state = ContentTransfer.Charged;
-                }
-            }
 
             Component {
                 id: resultComponent
@@ -149,7 +140,7 @@ MainView {
 
                 visible: parent.visible
                 contentType: ContentType.Text
-                handler: ContentHandler.Source
+                handler: ContentHandler.Share
 
                 onCancelPressed: {
                     print ("onCancelPressed");
@@ -158,18 +149,11 @@ MainView {
 
                 onPeerSelected: {
                     print ("onPeerSelected: " + peer.name);
-                    picker.curTransfer = peer.request();
+                    print ("sending text: " + picker.text);
+                    var request = peer.request();
+                    request.items = [ resultComponent.createObject(root, {"text": picker.text}) ];
+                    request.state = ContentTransfer.Charged;
                     pageStack.pop();
-                    textArea.text = "";
-                    if (picker.curTransfer.state === ContentTransfer.InProgress)
-                        picker.exportItems(picker.text);
-                }
-            }
-
-            Connections {
-                target: picker.curTransfer
-                onStateChanged: {
-                    print("StateChanged: " + picker.curTransfer.state);
                 }
             }
         }
