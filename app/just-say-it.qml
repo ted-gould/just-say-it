@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import Ubuntu.Components 1.1
 import Ubuntu.Content 1.1
+import Ubuntu.Components.ListItems 0.1 as ListItem
 import JustSayIt 1.0
 
 /*!
@@ -106,12 +107,39 @@ MainView {
                     autoSize: true
                 }
 
+                ListItem.ItemSelector {
+                    id: langSelector
+                    showDivider: false
+                    expanded: false
+                    model: ['en-US', 'en-GB', 'de-DE', 'es-ES', 'fr-FR', 'it-IT', 'zh-CN']
+                    delegate: OptionSelectorDelegate {
+                        objectName: "selectLang" + modelData
+                        text: {
+                            return {
+                                'en-US': i18n.tr("English (United States)"),
+                                'en-GB': i18n.tr("English (British)"),
+                                'de-DE': i18n.tr("German"),
+                                'es-ES': i18n.tr("European Spanish"),
+                                'fr-FR': i18n.tr("French"),
+                                'it-IT': i18n.tr("Italian"),
+                                'zh-CN': i18n.tr("Chinese (Mandarin)")
+                            }[modelData]
+                        }
+                        showDivider: false
+                    }
+                    selectedIndex: model.indexOf('en-US')
+                    onDelegateClicked: {
+                        print("Language: " + model[index]);
+                    }
+                }
+
                 Button {
                     id: useButton
                     objectName: "useButton"
                     width: parent.width
                     text: i18n.tr("Share Text")
                     onClicked: pageStack.push(picker, {"text": recorder.text})
+                    enabled: recorder.text != ""
                 }
 
                 Button {
