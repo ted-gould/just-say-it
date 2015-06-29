@@ -14,6 +14,7 @@ class AudioRecorder : public QObject
     Q_OBJECT
     Q_PROPERTY( QString text READ getText NOTIFY textChanged )
     Q_PROPERTY( QString state READ getState NOTIFY stateChanged )
+    Q_PROPERTY( QString language READ getLanguage WRITE setLanguage )
 
 public:
     explicit AudioRecorder (QObject *parent = 0);
@@ -33,22 +34,14 @@ protected slots:
 
 protected:
     QString getText() { return m_text; }
-    QString getState() {
-        if (m_recorder.state() == QMediaRecorder::StoppedState) {
-            if (m_upload != NULL && m_upload->isRunning())
-                return "uploading";
-            else if (m_content != NULL && m_content->isRunning())
-                return "processing";
-            else
-                return "stopped";
-        } else {
-            return "recording";
-        }
-    }
+    QString getState();
+    QString getLanguage();
+    void setLanguage(QString &inlang);
 
     void timerEvent (QTimerEvent *) Q_DECL_OVERRIDE;
 
     QString m_text;
+    QString m_language;
     QAudioRecorder m_recorder;
     QNetworkAccessManager * m_qnam;
     QNetworkReply * m_upload;

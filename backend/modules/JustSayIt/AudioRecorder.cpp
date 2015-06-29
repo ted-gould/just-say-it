@@ -10,6 +10,7 @@
 AudioRecorder::AudioRecorder(QObject *parent)
     : QObject(parent)
     , m_text("")
+    , m_language("en-US")
     , m_recorder(this)
     , m_upload(NULL)
     , m_content(NULL)
@@ -48,6 +49,32 @@ AudioRecorder::clearNetwork () {
     }
 }
 
+QString
+AudioRecorder::getState() {
+    if (m_recorder.state() == QMediaRecorder::StoppedState) {
+        if (m_upload != NULL && m_upload->isRunning())
+            return "uploading";
+        else if (m_content != NULL && m_content->isRunning())
+            return "processing";
+        else
+            return "stopped";
+    } else {
+        return "recording";
+    }
+}
+
+QString
+AudioRecorder::getLanguage()
+{
+    return m_language;
+}
+
+void
+AudioRecorder::setLanguage(QString &inlang)
+{
+    m_language = inlang;
+}
+
 void
 AudioRecorder::onStateChanged (QMediaRecorder::State state) {
     if (state == QMediaRecorder::StoppedState) {
@@ -63,6 +90,13 @@ AudioRecorder::onStateChanged (QMediaRecorder::State state) {
         apikey.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"apikey\""));
         apikey.setBody("7a3505c1-dc73-423c-a095-9ab189563bd9");
         multipart->append(apikey);
+
+        /* Set Launguage */
+        QHttpPart langpart;
+        langpart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"language\""));
+        langpart.setBody(m_language.toUtf8());
+        multipart->append(langpart);
+        qDebug() << "Sending language as:" << m_language.toUtf8();
 
         /* Attach file */
         QHttpPart audiofile;
@@ -146,6 +180,7 @@ AudioRecorder::onUploadFinished () {
             connect(m_content, SIGNAL(finished()), this, SLOT(onContentFinished()));
        }
     } else if (m_upload->error() == QNetworkReply::OperationCanceledError) {
+        qDebug("Upload cancelled");
         /* No Op */
     } else {
         m_text = "Error from webservice:\n";
@@ -176,6 +211,7 @@ AudioRecorder::onContentFinished () {
        }
     } else if (m_content->error() == QNetworkReply::OperationCanceledError) {
         /* No Op */
+        qDebug("Processing cancelled");
     } else {
         m_text = "Error from webservice:\n";
         m_text += m_content->readAll();

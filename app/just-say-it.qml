@@ -130,6 +130,7 @@ MainView {
                     selectedIndex: model.indexOf('en-US')
                     onDelegateClicked: {
                         print("Language: " + model[index]);
+                        recorder.language = model[index];
                     }
                 }
 
