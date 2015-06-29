@@ -14,6 +14,7 @@ AudioRecorder::AudioRecorder(QObject *parent)
     , m_recorder(this)
     , m_upload(NULL)
     , m_content(NULL)
+    , m_tempfile(NULL)
 {
     m_qnam = new QNetworkAccessManager(this);
 
@@ -103,7 +104,9 @@ AudioRecorder::onStateChanged (QMediaRecorder::State state) {
         audiofile.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"file\"; filename=\"tmp.wav\""));
         audiofile.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("audio/wav"));
         m_tempfile->open();
-        audiofile.setBodyDevice(&(*m_tempfile));
+        audiofile.setBodyDevice(m_tempfile);
+        m_tempfile->setParent(multipart);
+        m_tempfile = NULL;
 
         multipart->append(audiofile);
 
@@ -127,7 +130,11 @@ AudioRecorder::record() {
         Q_EMIT textChanged();
     }
 
-    m_tempfile = std::make_shared<QTemporaryFile>();
+    if (m_tempfile != NULL) {
+        m_tempfile->deleteLater();
+        m_tempfile = NULL;
+    }
+    m_tempfile = new QTemporaryFile();
     m_tempfile->open(); /* Creates the file, but we can't use it with Audio Recorder */
     m_tempfile->close();
 
@@ -191,7 +198,6 @@ AudioRecorder::onUploadFinished () {
 
     m_upload->deleteLater();
     m_upload = NULL;
-    m_tempfile.reset();
 
     Q_EMIT stateChanged();
 }
